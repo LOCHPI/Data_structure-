@@ -1,3 +1,6 @@
+from logger import Logger
+from recommendation import recommend_products
+
 class Product:
     def __init__(self, id, name, price, category, rating, sales):
         self.id= id
@@ -26,23 +29,32 @@ class Product:
 
 products = []
 logging = []
+logger = Logger()
 
 
 def add_product():
-    id = input("product id: ")
+    pid = input("product id: ").strip()
+
     for p in products:
-      if p.id == id:
-         print(f"product with id {p.id} already exists")
-         save_logging("Adding Product failed" + id)
-         return
+        if p.id == pid:
+            print(f"product with id {pid} already exists")
+            logger.log(f"[ADD] failed (duplicate id): {pid}")
+            return
 
-    name = input("product name: ")
-    price = float(input("product price: "))
-    category = input("product category: ")
+    name = input("product name: ").strip()
 
-    products.append(Product(id, name, price, category,rating=0, sales=0 ))
-    print(f"product {id} added successfully!")
-    save_logging("Adding Product succeeded" + id)
+    try:
+        price = float(input("product price: ").strip())
+    except ValueError:
+        print("Invalid price")
+        logger.log(f"[ADD] failed (invalid price): {pid}")
+        return
+
+    category = input("product category: ").strip()
+
+    products.append(Product(pid, name, price, category, 0.0, 0))
+    print(f"product {pid} added successfully!")
+    logger.log(f"[ADD] success: {pid}")
 
 
 def save_logging(a):
@@ -51,74 +63,90 @@ def save_logging(a):
 
 def pop_product():
     if not products:
-        print("No product to pop")
-        save_logging("Removing Product failed")
+        print("No product to remove")
+        logger.log("[REMOVE] failed (empty list)")
         return
 
-    id = input("product id: ")
-    for p in products:
-        if p.id == id:
-            products.remove(p)
-            print(f"product {id} removed successfully!")
-            save_logging("Removing Product failed" + id)
-            return
+    pid = input("product id: ").strip()
 
-    print("Product not found")
-    save_logging("Removing Product failed" + id)
+    target_index = -1
+    for i in range(len(products)):
+        if products[i].id == pid:
+            target_index = i
+            break
+
+    if target_index == -1:
+        print("Product not found")
+        logger.log(f"[REMOVE] failed (not found): {pid}")
+        return
+
+    products.pop(target_index)
+    print(f"product {pid} removed successfully!")
+    logger.log(f"[REMOVE] success: {pid}")
+
 
 
 
 def edit_product_inf():
     if not products:
         print("No product to edit")
-        save_logging("Editing Product failed")
+        logger.log("[EDIT] failed (empty list)")
+        return
 
-    id = input("product id: ")
+    pid = input("product id: ").strip()
+
+    target = None
     for p in products:
-        if p.id == id:
-            choice = input(f"""
-            Select the property you want to edit {p.id} :
-             1. name
-             2. price
-             3. category
-             4. rating
-             5. sales
-             6. id         
-""")
-            try:
-              if choice == "1":
-                a = input("Enter new value :")
-                p.name = a
-                print(f"Product name changed to {a}!")
+        if p.id == pid:
+            target = p
+            break
 
-              if choice == "2":
-                a = input("Enter new value :")
-                p.price = a
-                print(f"Product price changed to {a}!")
+    if target is None:
+        print("Product not found")
+        logger.log(f"[EDIT] failed (not found): {pid}")
+        return
 
-              if choice == "3":
-                a = input("Enter new value :")
-                p.category = a
-                print(f"Product category changed to {a}!")
+    choice = input(
+        "Select field:\n"
+        "1) name\n"
+        "2) price\n"
+        "3) category\n"
+        "4) rating\n"
+        "5) sales\n"
+        "choice: "
+    ).strip()
 
-              if choice == "4":
-                a = input("Enter new value :")
-                print(f"Product rating changed to {a}!")
+    try:
+        if choice == "1":
+            target.name = input("new name: ").strip()
+            logger.log(f"[EDIT] success (name): {pid}")
 
-              if choice == "5":
-                a = input("Enter new value :")
-                print(f"Product sales changed to {a}!")
+        elif choice == "2":
+            target.price = float(input("new price: ").strip())
+            logger.log(f"[EDIT] success (price): {pid}")
 
-              if choice == "6":
-                a = input("Enter new value :")
-                p.id = a
-                print(f"Product id changed to {a}!")
-              save_logging("Editing Product succeeded" + str(id))
+        elif choice == "3":
+            target.category = input("new category: ").strip()
+            logger.log(f"[EDIT] success (category): {pid}")
 
-            except ValueError:
-                print("Invalid value")
-                save_logging("Editing Product failed" + str(id))
+        elif choice == "4":
+            target.rating = float(input("new rating: ").strip())
+            logger.log(f"[EDIT] success (rating): {pid}")
 
+        elif choice == "5":
+            target.sales = int(input("new sales: ").strip())
+            logger.log(f"[EDIT] success (sales): {pid}")
+
+        else:
+            print("Invalid choice")
+            logger.log(f"[EDIT] failed (invalid choice): {pid}")
+            return
+
+        print("Done.")
+
+    except ValueError:
+        print("Invalid value")
+        logger.log(f"[EDIT] failed (invalid value): {pid}")
 
 def show_product_list():
     if not products:
@@ -245,10 +273,76 @@ def sort_by_sales():
                 products[j], products[j+1] = products[j+1], products[j]
 
     save_logging("Sort by sales succeeded")
+    def view_product_and_recommend():
+    if not products:
+        print("No products.")
+        logger.log("[VIEW] failed (empty list)")
+        return
+
+    pid = input("Enter product id to view: ").strip()
+
+    found = None
+    for p in products:
+        if p.id == pid:
+            found = p
+            break
+
+    if found is None:
+        print("Product not found")
+        logger.log(f"[VIEW] failed (not found): {pid}")
+        return
+
+    logger.log(f"[VIEW] viewed: {found.id}")
+
+    found.show_product_inf()
+
+    recs = recommend_products(products, found, k=5, price_percent=0.2)
+
+    print("\n--- Recommended ---")
+    if len(recs) == 0:
+        print("No recommendations.")
+        logger.log(f"[RECOMMEND] none for id={found.id}")
+    else:
+        logger.log(f"[RECOMMEND] {len(recs)} items for id={found.id}")
+        for r in recs:
+            print(f"- {r.name} | {r.category} | {r.price} | id={r.id}")
+def main():
+    while True:
+        print("\n1) Add product")
+        print("2) Remove product")
+        print("3) Edit product")
+        print("4) Show product list")
+        print("5) View product (and recommend)")
+        print("0) Exit")
+
+        choice = input("Choose: ").strip()
+
+        if choice == "1":
+            add_product()
+        elif choice == "2":
+            pop_product()
+        elif choice == "3":
+            edit_product_inf()
+        elif choice == "4":
+            show_product_list()
+        elif choice == "5":
+            view_product_and_recommend()
+        elif choice == "0":
+            logger.log("[EXIT]")
+            logger.print_logs()
+            # logger.save_to_file("log.txt")
+            break
+        else:
+            print("Invalid choice")
+
+if __name__ == "__main__":
+    main()
+
 
 
 
 ###   suggest product   ###
+
 
 
 
