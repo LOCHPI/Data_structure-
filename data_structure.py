@@ -1,3 +1,4 @@
+import json
 from logger import Logger
 from recommendation import recommend_products
 
@@ -27,12 +28,48 @@ class Product:
 
 
 products = []
-logging = []
 logger = Logger()
 
 
-def save_logging(a):
-    logging.append(a)
+def load_products_from_file(filename="data.json"):
+    global products
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            products = []
+            for item in data:
+                products.append(
+                    Product(
+                        item["id"],
+                        item["name"],
+                        item["price"],
+                        item["category"],
+                        item.get("rating", 0.0),
+                        item.get("sales", 0),
+                    )
+                )
+    except FileNotFoundError:
+        products = []
+    except json.JSONDecodeError:
+        products = []
+
+
+def save_products_to_file(filename="data.json"):
+    data = []
+    for p in products:
+        data.append(
+            {
+                "id": p.id,
+                "name": p.name,
+                "price": p.price,
+                "category": p.category,
+                "rating": p.rating,
+                "sales": p.sales,
+            }
+        )
+
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def add_product():
@@ -56,6 +93,7 @@ def add_product():
     category = input("product category: ").strip()
 
     products.append(Product(pid, name, price, category, 0.0, 0))
+    save_products_to_file()
     print(f"product {pid} added successfully!")
     logger.log(f"[ADD] success: {pid}")
 
@@ -80,6 +118,7 @@ def pop_product():
         return
 
     products.pop(target_index)
+    save_products_to_file()
     print(f"product {pid} removed successfully!")
     logger.log(f"[REMOVE] success: {pid}")
 
@@ -139,6 +178,7 @@ def edit_product_inf():
             logger.log(f"[EDIT] failed (invalid choice): {pid}")
             return
 
+        save_products_to_file()
         print("Done.")
 
     except ValueError:
@@ -159,7 +199,6 @@ def show_product_list():
 def search_by_name():
     if not products:
         print("No product to search")
-        save_logging("Search by name failed (empty list)")
         logger.log("[SEARCH] by name (empty list)")
         return
 
@@ -170,11 +209,9 @@ def search_by_name():
         if p.name.strip().lower() == a:
             p.show_product_inf()
             result = True
-            save_logging("Search by name succeeded " + str(p.id))
 
     if not result:
         print(f"Product with name {a} not found!")
-        save_logging("Search by name failed")
 
     logger.log("[SEARCH] by name")
 
@@ -182,7 +219,6 @@ def search_by_name():
 def search_by_category():
     if not products:
         print("No product to search")
-        save_logging("Search by category failed (empty list)")
         logger.log("[SEARCH] by category (empty list)")
         return
 
@@ -193,11 +229,9 @@ def search_by_category():
         if p.category.strip().lower() == a:
             p.show_product_inf()
             result = True
-            save_logging("Search by category succeeded " + str(p.id))
 
     if not result:
         print(f"Product with category {a} not found!")
-        save_logging("Search by category failed")
 
     logger.log("[SEARCH] by category")
 
@@ -205,7 +239,6 @@ def search_by_category():
 def search_by_price_range():
     if not products:
         print("No product to search")
-        save_logging("Search by price range failed (empty list)")
         logger.log("[SEARCH] by price range (empty list)")
         return
 
@@ -214,7 +247,6 @@ def search_by_price_range():
         min_p = float(input("Product min price: ").strip())
     except ValueError:
         print("Invalid price range")
-        save_logging("Search by price range failed (invalid input)")
         logger.log("[SEARCH] by price range (invalid input)")
         return
 
@@ -228,7 +260,6 @@ def search_by_price_range():
 
     if not result:
         print("No product found in this range")
-        save_logging("Search by price range failed (no results)")
         logger.log("[SEARCH] by price range (no results)")
         return
 
@@ -236,14 +267,12 @@ def search_by_price_range():
         print(f"{j}.")
         m.show_product_inf()
 
-    save_logging("Search by price range succeeded")
     logger.log("[SEARCH] by price range")
 
 
 def sort_by_price(ascending=True):
     if not products:
         print("No product to sort")
-        save_logging("Sort by price failed (empty list)")
         logger.log("[SORT] by price (empty list)")
         return
 
@@ -257,14 +286,12 @@ def sort_by_price(ascending=True):
                 if products[j].price < products[j + 1].price:
                     products[j], products[j + 1] = products[j + 1], products[j]
 
-    save_logging("Sort by price succeeded")
     logger.log("[SORT] by price")
 
 
 def sort_by_rating():
     if not products:
         print("No product to sort")
-        save_logging("Sort by rating failed (empty list)")
         logger.log("[SORT] by rating (empty list)")
         return
 
@@ -274,14 +301,12 @@ def sort_by_rating():
             if products[j].rating < products[j + 1].rating:
                 products[j], products[j + 1] = products[j + 1], products[j]
 
-    save_logging("Sort by rating succeeded")
     logger.log("[SORT] by rating")
 
 
 def sort_by_sales():
     if not products:
         print("No product to sort")
-        save_logging("Sort by sales failed (empty list)")
         logger.log("[SORT] by sales (empty list)")
         return
 
@@ -291,7 +316,6 @@ def sort_by_sales():
             if products[j].sales < products[j + 1].sales:
                 products[j], products[j + 1] = products[j + 1], products[j]
 
-    save_logging("Sort by sales succeeded")
     logger.log("[SORT] by sales")
 
 
@@ -330,6 +354,8 @@ def view_product_and_recommend():
 
 
 def main():
+    load_products_from_file()
+
     while True:
         print("\n1) Add product")
         print("2) Remove product")
@@ -373,6 +399,7 @@ def main():
             view_product_and_recommend()
         elif choice == "0":
             logger.log("[EXIT]")
+            save_products_to_file()
             logger.print_logs()
             break
         else:
