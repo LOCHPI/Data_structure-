@@ -1,35 +1,38 @@
 from logger import Logger
 from recommendation import recommend_products
 
+
 class Product:
     def __init__(self, id, name, price, category, rating, sales):
-        self.id= id
+        self.id = id
         self.name = name
-        self.price = price
+        self.price = float(price)
         self.category = category
-        self.rating = rating
-        self.sales = sales
+        self.rating = float(rating)
+        self.sales = int(sales)
 
     def __str__(self):
         return f"{self.id} | {self.name} | {self.price} | {self.category} | {self.rating} | {self.sales}"
 
-
     def show_product_inf(self):
-        print(f"""
-              id: {self.id}
-              name: {self.name}
-              price: {self.price}
-              category: {self.category}
-              rating: {self.rating}
-              sales: {self.sales}""")
+        print(
+            f"\n"
+            f"id: {self.id}\n"
+            f"name: {self.name}\n"
+            f"price: {self.price}\n"
+            f"category: {self.category}\n"
+            f"rating: {self.rating}\n"
+            f"sales: {self.sales}\n"
+        )
 
-
-
-####   product management   ###
 
 products = []
 logging = []
 logger = Logger()
+
+
+def save_logging(a):
+    logging.append(a)
 
 
 def add_product():
@@ -57,10 +60,6 @@ def add_product():
     logger.log(f"[ADD] success: {pid}")
 
 
-def save_logging(a):
-    logging.append(a)
-
-
 def pop_product():
     if not products:
         print("No product to remove")
@@ -83,8 +82,6 @@ def pop_product():
     products.pop(target_index)
     print(f"product {pid} removed successfully!")
     logger.log(f"[REMOVE] success: {pid}")
-
-
 
 
 def edit_product_inf():
@@ -148,103 +145,117 @@ def edit_product_inf():
         print("Invalid value")
         logger.log(f"[EDIT] failed (invalid value): {pid}")
 
+
 def show_product_list():
     if not products:
         print("No product to show")
+        return
 
-    for i , p in enumerate(products,1):
-        print(f"{i}. ")
+    for i, p in enumerate(products, 1):
+        print(f"{i}.")
         p.show_product_inf()
-
-
-
-###   search menu   ###
 
 
 def search_by_name():
     if not products:
         print("No product to search")
-        save_logging("Searching Product failed")
+        save_logging("Search by name failed (empty list)")
+        logger.log("[SEARCH] by name (empty list)")
         return
 
-    a = input("Enter product name :").strip().lower()
+    a = input("Enter product name: ").strip().lower()
     result = False
+
     for p in products:
-        if p.name.lower().strip() == a:
+        if p.name.strip().lower() == a:
             p.show_product_inf()
             result = True
-            save_logging("Search by name succeeded" + p.id)
+            save_logging("Search by name succeeded " + str(p.id))
 
     if not result:
-        print(f"Product with name {a} not found !")
+        print(f"Product with name {a} not found!")
         save_logging("Search by name failed")
-     logger.log("[SEARCH] by name")
-   
 
+    logger.log("[SEARCH] by name")
 
 
 def search_by_category():
     if not products:
         print("No product to search")
-        save_logging("Searching Product failed")
+        save_logging("Search by category failed (empty list)")
+        logger.log("[SEARCH] by category (empty list)")
         return
 
-    a = input("Enter product category :").strip().lower()
+    a = input("Enter product category: ").strip().lower()
     result = False
+
     for p in products:
-        if p.category.lower().strip() == a:
+        if p.category.strip().lower() == a:
             p.show_product_inf()
             result = True
-            save_logging("Search by category succeeded" + p.id)
+            save_logging("Search by category succeeded " + str(p.id))
 
     if not result:
-        print(f"Product with category {a} not found !")
+        print(f"Product with category {a} not found!")
         save_logging("Search by category failed")
+
     logger.log("[SEARCH] by category")
 
 
 def search_by_price_range():
     if not products:
         print("No product to search")
-        save_logging("Search by price range failed")
+        save_logging("Search by price range failed (empty list)")
+        logger.log("[SEARCH] by price range (empty list)")
+        return
+
+    try:
+        max_p = float(input("Product max price: ").strip())
+        min_p = float(input("Product min price: ").strip())
+    except ValueError:
+        print("Invalid price range")
+        save_logging("Search by price range failed (invalid input)")
+        logger.log("[SEARCH] by price range (invalid input)")
+        return
+
+    if min_p > max_p:
+        min_p, max_p = max_p, min_p
 
     result = []
-    max_p = float(input("Product max price :"))
-    min_p = float(input("Product min price :"))
-
     for p in products:
-        if min_p <= p.price <= max_p :
+        if min_p <= p.price <= max_p:
             result.append(p)
 
     if not result:
         print("No product found in this range")
-        save_logging("Search Product failed")
+        save_logging("Search by price range failed (no results)")
+        logger.log("[SEARCH] by price range (no results)")
+        return
 
-    for j , m in enumerate(result,1):
-        print(f"{j}. {m.show_product_inf()}")
+    for j, m in enumerate(result, 1):
+        print(f"{j}.")
+        m.show_product_inf()
 
     save_logging("Search by price range succeeded")
     logger.log("[SEARCH] by price range")
 
 
-###   To bubble sort products   ###
-
-
-def sort_by_price(result = True):
+def sort_by_price(ascending=True):
     if not products:
         print("No product to sort")
-        save_logging("Sort by price failed")
+        save_logging("Sort by price failed (empty list)")
+        logger.log("[SORT] by price (empty list)")
         return
 
-    for i in range(len(products)):
-        for j in range(len(products)-i-1):
-          if result:
-            if products[j].price > products[j+1].price:
-                products[j], products[j+1] = products[j+1], products[j]
-
-          else:
-            if products[j].price < products[j+1].price:
-                products[j], products[j+1] = products[j+1], products[j]
+    n = len(products)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if ascending:
+                if products[j].price > products[j + 1].price:
+                    products[j], products[j + 1] = products[j + 1], products[j]
+            else:
+                if products[j].price < products[j + 1].price:
+                    products[j], products[j + 1] = products[j + 1], products[j]
 
     save_logging("Sort by price succeeded")
     logger.log("[SORT] by price")
@@ -253,12 +264,15 @@ def sort_by_price(result = True):
 def sort_by_rating():
     if not products:
         print("No product to sort")
-        save_logging("Sort by rating failed")
+        save_logging("Sort by rating failed (empty list)")
+        logger.log("[SORT] by rating (empty list)")
+        return
 
-    for i in range(len(products)):
-        for j in range(len(products)-i-1):
-            if products[j].rating < products[j+1].rating:
-                products[j], products[j+1] = products[j+1], products[j]
+    n = len(products)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if products[j].rating < products[j + 1].rating:
+                products[j], products[j + 1] = products[j + 1], products[j]
 
     save_logging("Sort by rating succeeded")
     logger.log("[SORT] by rating")
@@ -267,15 +281,21 @@ def sort_by_rating():
 def sort_by_sales():
     if not products:
         print("No product to sort")
-        save_logging("Sort by sales failed")
+        save_logging("Sort by sales failed (empty list)")
+        logger.log("[SORT] by sales (empty list)")
+        return
 
-    for i in range(len(products)):
-        for j in range(len(products)-i-1):
-            if products[j].sales < products[j+1].sales:
-                products[j], products[j+1] = products[j+1], products[j]
+    n = len(products)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if products[j].sales < products[j + 1].sales:
+                products[j], products[j + 1] = products[j + 1], products[j]
 
     save_logging("Sort by sales succeeded")
-    def view_product_and_recommend():
+    logger.log("[SORT] by sales")
+
+
+def view_product_and_recommend():
     if not products:
         print("No products.")
         logger.log("[VIEW] failed (empty list)")
@@ -295,7 +315,6 @@ def sort_by_sales():
         return
 
     logger.log(f"[VIEW] viewed: {found.id}")
-
     found.show_product_inf()
 
     recs = recommend_products(products, found, k=5, price_percent=0.2)
@@ -308,14 +327,22 @@ def sort_by_sales():
         logger.log(f"[RECOMMEND] {len(recs)} items for id={found.id}")
         for r in recs:
             print(f"- {r.name} | {r.category} | {r.price} | id={r.id}")
-    logger.log("[SORT] by sales")
+
+
 def main():
     while True:
         print("\n1) Add product")
         print("2) Remove product")
         print("3) Edit product")
         print("4) Show product list")
-        print("5) View product (and recommend)")
+        print("5) Search by name")
+        print("6) Search by category")
+        print("7) Search by price range")
+        print("8) Sort by price (asc)")
+        print("9) Sort by price (desc)")
+        print("10) Sort by rating (desc)")
+        print("11) Sort by sales (desc)")
+        print("12) View product (and recommend)")
         print("0) Exit")
 
         choice = input("Choose: ").strip()
@@ -329,26 +356,28 @@ def main():
         elif choice == "4":
             show_product_list()
         elif choice == "5":
+            search_by_name()
+        elif choice == "6":
+            search_by_category()
+        elif choice == "7":
+            search_by_price_range()
+        elif choice == "8":
+            sort_by_price(True)
+        elif choice == "9":
+            sort_by_price(False)
+        elif choice == "10":
+            sort_by_rating()
+        elif choice == "11":
+            sort_by_sales()
+        elif choice == "12":
             view_product_and_recommend()
         elif choice == "0":
             logger.log("[EXIT]")
             logger.print_logs()
-            # logger.save_to_file("log.txt")
             break
         else:
             print("Invalid choice")
 
+
 if __name__ == "__main__":
     main()
-
-
-
-
-###   suggest product   ###
-
-
-
-
-
-###   logging   ###
-
