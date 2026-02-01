@@ -178,6 +178,8 @@ def search_by_name():
     if not result:
         print(f"Product with name {a} not found !")
         save_logging("Search by name failed")
+     logger.log("[SEARCH] by name")
+   
 
 
 
@@ -198,7 +200,7 @@ def search_by_category():
     if not result:
         print(f"Product with category {a} not found !")
         save_logging("Search by category failed")
-
+    logger.log("[SEARCH] by category")
 
 
 def search_by_price_range():
@@ -222,7 +224,7 @@ def search_by_price_range():
         print(f"{j}. {m.show_product_inf()}")
 
     save_logging("Search by price range succeeded")
-
+    logger.log("[SEARCH] by price range")
 
 
 ###   To bubble sort products   ###
@@ -245,7 +247,7 @@ def sort_by_price(result = True):
                 products[j], products[j+1] = products[j+1], products[j]
 
     save_logging("Sort by price succeeded")
-
+    logger.log("[SORT] by price")
 
 
 def sort_by_rating():
@@ -259,7 +261,7 @@ def sort_by_rating():
                 products[j], products[j+1] = products[j+1], products[j]
 
     save_logging("Sort by rating succeeded")
-
+    logger.log("[SORT] by rating")
 
 
 def sort_by_sales():
@@ -306,6 +308,7 @@ def sort_by_sales():
         logger.log(f"[RECOMMEND] {len(recs)} items for id={found.id}")
         for r in recs:
             print(f"- {r.name} | {r.category} | {r.price} | id={r.id}")
+    logger.log("[SORT] by sales")
 def main():
     while True:
         print("\n1) Add product")
@@ -348,3 +351,4 @@ if __name__ == "__main__":
 
 
 ###   logging   ###
+
